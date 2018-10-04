@@ -88,6 +88,7 @@ ggplot(customer_summary_spend,
   scale_x_log10() +
   coord_cartesian(xlim = c(0.1, 100)) +
   labs(title = "Histogram of Customer Average Item Value",
+       caption = "Note log10 scale on x axis",
        x = "Average item value (£)",
        y = "Count of customers") +
   theme_minimal()
@@ -142,12 +143,40 @@ table(light_on$light)
 # Create customer segment
 
 lighting_lovers <-
-  light_on
+  light_on %>%
+  filter(light == TRUE)
   
 
+# When do our lighting lovers shop?
+
+uk_data %>%
+  mutate(light = str_detect(uk_data$Description, "LIGHT")) %>%
+  filter(light == TRUE) %>%
+  group_by(CustomerID, day) %>%
+  summarise(revenue = sum(Quantity * UnitPrice)) %>%
+  ggplot(aes(day, revenue)) + geom_col() +
+  labs(title = "Revenue From Customers Who Have \nBought Lights by Day",
+       x = "Day of week",
+       y = "Revenue (£)") +
+  theme_minimal()
 
 
+# Analysis of variance on day of week revenue
 
+day_revenue <- 
+  uk_data %>%
+  mutate(light = str_detect(uk_data$Description, "LIGHT")) %>%
+  filter(light == TRUE) %>%
+  group_by(CustomerID, day) %>%
+  summarise(revenue = sum(Quantity * UnitPrice)) %>%
+  ungroup()
 
+day_aov <- aov(day_revenue$revenue ~ day_revenue$day)
+
+day_aov
+
+summary(day_aov)
+
+TukeyHSD(day_aov)
 
 
